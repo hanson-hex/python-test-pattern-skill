@@ -1,0 +1,39 @@
+{
+  "name": "python-test-pattern-skill",
+  "version": "0.3.0",
+  "description": "Python 测试技能，通过分析源码自动生成高质量单元测试。支持 pytest/unittest、mock、异步测试、HTTP/WebSocket mock、代码质量修复。",
+  "main": "SKILL.md",
+  "files": [
+    "SKILL.md",
+    "README.md",
+    "patterns/",
+    "fixtures/",
+    "examples/",
+    "install.sh"
+  ],
+  "scripts": {
+    "install": "bash install.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hanson-hex/python-test-pattern-skill.git"
+  },
+  "keywords": [
+    "python",
+    "testing",
+    "pytest",
+    "unittest",
+    "mock",
+    "claude-skill",
+    "ai-assistant",
+    "test-generator",
+    "unit-test",
+    "async-test"
+  ],
+  "author": "hanson-hex",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hanson-hex/python-test-pattern-skill/issues"
+  },
+  "homepage": "https://github.com/hanson-hex/python-test-pattern-skill#readme"
+}
