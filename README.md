@@ -1,125 +1,134 @@
 # Python Test Pattern Skill
 
-智能分析 Python 源码并生成高质量单元测试的 Claude Code Skill。
+A Claude Code Skill that intelligently analyzes Python source code and auto-generates high-quality unit tests.
 
-## 功能特性
+> **中文文档**: [README_zh.md](README_zh.md)
 
-- **智能源码分析** - 自动识别类结构、依赖和测试策略
-- **多框架支持** - pytest/unittest、mock、异步测试
-- **HTTP/WebSocket Mock** - 完整的外部依赖隔离方案
-- **代码质量保证** - 内置 pylint 修复、重复导入处理
-- **Pydantic 兼容** - 测试环境版本冲突解决方案
+## Features
 
-## 适用场景
+- **Smart source analysis** — automatically identifies class structure, dependencies, and test strategy
+- **Multi-framework support** — pytest/unittest, mock, async testing
+- **HTTP/WebSocket mock** — complete isolation for external dependencies
+- **Code quality assurance** — built-in pylint fixes, duplicate import handling
+- **Pydantic compatible** — resolves version conflict issues in test environments
 
-| 场景 | 说明 |
-|------|------|
-| 生成单元测试 | 为新功能/模块补充测试 |
-| 完善测试覆盖 | 已有测试但覆盖不足 |
-| 审查测试质量 | 检查现有测试完整性 |
+## When to Use
 
-## 安装
+| Scenario | Description |
+|----------|-------------|
+| Generate unit tests | Add coverage for new features/modules |
+| Improve test coverage | Existing tests are insufficient |
+| Review test quality | Check whether current tests are complete |
 
-### 方式 1: 一键安装
+## Installation
+
+### Option 1: One-line install
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/hanson-hex/python-test-pattern-skill/main/install.sh | bash
 ```
 
-### 方式 2: 手动安装
+### Option 2: Manual install
 
 ```bash
-# 克隆仓库
+# Clone the repo
 git clone https://github.com/hanson-hex/python-test-pattern-skill.git
 
-# 复制到 Claude Code skills 目录
+# Copy to Claude Code skills directory
 mkdir -p ~/.claude/skills/
 cp -r python-test-pattern-skill ~/.claude/skills/python-test-pattern
 
-# 重启 Claude Code
+# Restart Claude Code
 ```
 
-### 方式 3: 项目级安装（团队协作）
+### Option 3: Project-level install (team sharing)
 
 ```bash
-# 复制到项目内，团队成员共享
+# Copy into the project for shared team use
 mkdir -p .claude/skills/
 cp -r python-test-pattern-skill .claude/skills/python-test-pattern
 git add .claude/skills/python-test-pattern
 git commit -m "Add python-test-pattern skill"
 ```
 
-## 使用方法
+## Usage
 
-在 Claude Code 中，当需要生成测试时，Claude 会自动识别并调用此 skill。
+In Claude Code, mention testing and Claude will automatically recognize and apply this skill.
 
-### 示例对话
+### Example Prompts
 
 ```
-用户: "为 Channel 模块生成单元测试"
-用户: "检查测试覆盖率是否完整"
-用户: "完善 logging 模块的测试"
+"Generate unit tests for the Channel module"
+"Check if test coverage is complete"
+"Improve tests for the logging module"
+"Write tests for this class"
 ```
 
-## Skill 结构
+## Skill Structure
 
 ```
 python-test-pattern/
-├── SKILL.md                    # 技能主定义
-├── patterns/                   # 测试模式库
-│   ├── sync_unit_test.md      # 同步代码测试
-│   ├── async_unit_test.md     # 异步方法测试
-│   ├── http_mock.md           # HTTP 依赖 mock
-│   ├── websocket_test.md      # WebSocket 测试
-│   ├── complex_method_test.md # 复杂方法测试
-│   ├── exception_test.md      # 异常路径测试
-│   ├── third_party_mock.md    # 第三方库 mock
-│   ├── code_quality_fixes.md  # 代码质量修复
-│   └── mock_best_practices.md # Mock 最佳实践
-├── fixtures/                   # 通用 fixtures
+├── SKILL.md                         # Skill definition
+├── patterns/                        # Test pattern library
+│   ├── sync_unit_test.md            # Sync code tests
+│   ├── async_unit_test.md           # Async method tests
+│   ├── http_mock.md                 # HTTP dependency mock
+│   ├── websocket_test.md            # WebSocket tests
+│   ├── complex_method_test.md       # Complex method tests
+│   ├── exception_test.md            # Exception path tests
+│   ├── class_based_test.md          # Test class organization
+│   ├── patch_patterns.md            # Patch usage guide
+│   ├── dataclass_test.md            # Dataclass / Protocol tests
+│   ├── third_party_mock.md          # Missing third-party lib mock
+│   ├── mock_best_practices.md       # Mock object best practices
+│   ├── code_quality_fixes.md        # Code quality fixes
+│   ├── project_specific_fixtures.md # Project fixture extension guide
+│   └── test_debugging.md            # Debugging & troubleshooting
+├── fixtures/                        # Common fixtures
 │   └── generic_fixtures.py
-└── examples/                   # 使用示例
+└── examples/                        # Usage examples
     ├── channel_test_example.md
     └── http_mock_example.md
 ```
 
-## 测试模式速查
+## Pattern Quick Reference
 
-| 代码特征 | 参考模式 |
-|---------|---------|
-| 同步函数/类 | `patterns/sync_unit_test.md` |
-| 异步方法 | `patterns/async_unit_test.md` |
-| HTTP 依赖 | `patterns/http_mock.md` |
+| Code Characteristic | Pattern |
+|---------------------|---------|
+| Sync functions/classes | `patterns/sync_unit_test.md` |
+| Async methods | `patterns/async_unit_test.md` |
+| HTTP dependencies | `patterns/http_mock.md` |
 | WebSocket | `patterns/websocket_test.md` |
-| 复杂方法 | `patterns/complex_method_test.md` |
-| 异常处理 | `patterns/exception_test.md` |
-| 第三方库缺失 | `patterns/third_party_mock.md` |
+| Complex methods | `patterns/complex_method_test.md` |
+| Exception handling | `patterns/exception_test.md` |
+| Missing third-party libs | `patterns/third_party_mock.md` |
+| Dataclass / Protocol | `patterns/dataclass_test.md` |
 
-## 核心原则
+## Core Principles
 
-1. **AAA 模式** - Arrange(准备) → Act(执行) → Assert(断言)
-2. **Mock 完整性** - 显式设置所有可能访问的属性
-3. **异步正确** - 使用 AsyncMock 替代 MagicMock
-4. **边界覆盖** - 空值、空列表、异常输入、极限值
+1. **AAA Pattern** — Arrange → Act → Assert
+2. **Complete mocks** — explicitly set all attributes that may be accessed
+3. **Async correctness** — use `AsyncMock` instead of `MagicMock` for async methods
+4. **Boundary coverage** — None, empty list, invalid input, extreme values
 
-## Fixtures 列表
+## Fixtures
 
-| Fixture | 用途 |
-|---------|------|
-| `async_noop` | 异步空操作函数 |
-| `async_return_value` | 返回特定值的异步函数工厂 |
-| `mock_http_response` | HTTP 响应 mock |
-| `mock_http_session` | HTTP 会话 mock |
-| `temp_dir` | 临时目录 |
-| `call_counter` | 调用计数器 |
-| `event_collector` | 事件收集器 |
-| `empty_values` | 常见空值列表（边界测试） |
+| Fixture | Purpose |
+|---------|---------|
+| `async_noop` | Async no-op function |
+| `async_return_value` | Factory for async functions returning specific values |
+| `mock_http_response` | HTTP response mock factory |
+| `mock_http_session` | HTTP session mock |
+| `temp_dir` | Temporary directory |
+| `call_counter` | Call counter |
+| `event_collector` | Event collector |
+| `empty_values` | Common empty values for boundary testing |
 
-## 常见问题
+## FAQ
 
-### Q: 如何处理缺失的第三方库依赖？
+### Q: How to handle missing third-party library dependencies?
 
-在 `tests/conftest.py` 中统一 mock：
+Mock them in `tests/conftest.py`:
 
 ```python
 import sys
@@ -129,43 +138,33 @@ for module in ['thirdparty_sdk', 'external_api']:
     sys.modules[module] = MagicMock()
 ```
 
-详见 `patterns/third_party_mock.md`
+See `patterns/third_party_mock.md`.
 
-### Q: 如何避免 pre-commit 代码风格错误？
+### Q: How to avoid pre-commit style errors?
 
-生成测试时注意：
+1. **Line length**: limit to 79 characters
+2. **Unused variables**: delete or rename to `_`
+3. **Import order**: stdlib → third-party → local
 
-1. **行长度**：限制在 79 字符内
-2. **未使用变量**：删除或改为 `_`
-3. **导入顺序**：标准库 → 第三方 → 本地
+See `patterns/code_quality_fixes.md`.
 
-详见 `patterns/code_quality_fixes.md`
+### Q: Which HTTP mock should I use?
 
-### Q: Pydantic 测试环境版本冲突？
+| Library | Mock Class |
+|---------|------------|
+| aiohttp | MockAiohttpSession |
+| httpx | MockHttpxClient |
+| requests | MockRequestsResponse |
 
-使用 Mock 替代真实 Pydantic 模型：
+## Contributing
 
-```python
-@pytest.fixture
-def mock_config():
-    config = MagicMock()
-    config.enabled = True
-    config.timeout = 30
-    return config
-```
-
-详见 `patterns/code_quality_fixes.md`
-
-## 贡献
-
-欢迎提交 Issue 和 PR！
+Issues and PRs are welcome!
 
 ```bash
-# 本地开发
 git clone https://github.com/hanson-hex/python-test-pattern-skill.git
 cd python-test-pattern-skill
 
-# 修改后提交
+# Make changes and submit
 gh pr create
 ```
 

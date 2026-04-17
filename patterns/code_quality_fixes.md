@@ -1,37 +1,37 @@
-# 代码质量与测试环境修复模式
+# Code Quality & Test Environment Fixes
 
-## 问题 1: pylint E501 Line Too Long
+## Issue 1: pylint E501 Line Too Long
 
-**现象:**
+**Symptom:**
 ```
 E501 Line too long (88 > 79 characters)
 ```
 
-**解决方案:**
+**Solutions:**
 
-### 方法 1: 字符串换行 (推荐)
+### Method 1: String line continuation (Recommended)
 ```python
-# ❌ 错误 - 超过 79 字符
+# ❌ Wrong — exceeds 79 characters
 raise ValueError(f"Failed to initialize {self.__class__.__name__}: {str(e)}")
 
-# ✅ 正确 - 括号内隐式连接
+# ✅ Correct — implicit continuation inside parentheses
 raise ValueError(
     f"Failed to initialize {self.__class__.__name__}: {str(e)}"
 )
 
-# ✅ 正确 - 三引号字符串
+# ✅ Correct — triple-quoted string
 error_msg = """
 This is a very long error message that explains
 what went wrong in detail.
 """
 ```
 
-### 方法 2: 拆分长行
+### Method 2: Split long lines
 ```python
-# ❌ 错误
+# ❌ Wrong
 result = self.some_method(arg1, arg2, arg3, arg4, arg5, arg6)
 
-# ✅ 正确 - 每行一个参数
+# ✅ Correct — one argument per line
 result = self.some_method(
     arg1,
     arg2,
@@ -40,50 +40,50 @@ result = self.some_method(
 )
 ```
 
-### 方法 3: 变量提取
+### Method 3: Extract variables
 ```python
-# ❌ 错误
+# ❌ Wrong
 assert channel.bot is not None, f"Bot is None after initialization for {channel.__class__.__name__}"
 
-# ✅ 正确
+# ✅ Correct
 channel_name = channel.__class__.__name__
 assert channel.bot is not None, f"Bot is None after init for {channel_name}"
 ```
 
 ---
 
-## 问题 2: 重复导入警告 (W0404 / R0401)
+## Issue 2: Duplicate Import Warnings (W0404 / R0401)
 
-**现象:**
+**Symptom:**
 ```
 W0404: Reimport 'MagicMock' (imported line 5)
 R0401: Cyclic import
 ```
 
-**解决方案:**
+**Solutions:**
 
-### 统一顶层导入
+### Consolidate top-level imports
 ```python
-# ✅ 正确 - 所有导入放在文件顶部
+# ✅ Correct — all imports at the top of the file
 import pytest
 from unittest.mock import MagicMock, AsyncMock, patch
 from typing import Optional
 
-# 测试类中使用
+# Use in test classes without re-importing
 class TestExample:
     def test_something(self):
-        mock = MagicMock()  # 不再重复导入
+        mock = MagicMock()
 ```
 
-### 避免嵌套导入 (除非必要)
+### Avoid nested imports (unless necessary)
 ```python
-# ❌ 错误 - 不必要的嵌套导入
+# ❌ Wrong — unnecessary nested import
 class TestExample:
     def test_something(self):
         from unittest.mock import MagicMock
         mock = MagicMock()
 
-# ✅ 正确 - 统一顶层导入
+# ✅ Correct — consolidated top-level import
 from unittest.mock import MagicMock
 
 class TestExample:
@@ -91,9 +91,9 @@ class TestExample:
         mock = MagicMock()
 ```
 
-### 特殊情况: fixture 中延迟导入
+### Special case: lazy imports in fixtures
 ```python
-# ✅ 正确 - 避免循环导入
+# ✅ Correct — avoids circular imports
 @pytest.fixture
 def mock_client():
     from myapp.client import Client
@@ -102,26 +102,26 @@ def mock_client():
 
 ---
 
-## 问题 3: Pydantic 测试环境问题
+## Issue 3: Pydantic Test Environment Problems
 
-**现象:**
+**Symptom:**
 ```
 E0611: No name 'BaseModel' in module 'pydantic'
 TypeError: Metaclass conflict when mocking Pydantic models
 ```
 
-**原因:**
-测试环境可能安装不同版本的 Pydantic (v1 vs v2)，导致模型导入失败。
+**Root cause:**
+The test environment may have a different version of Pydantic (v1 vs v2), causing model imports to fail.
 
-**解决方案:**
+**Solutions:**
 
-### 方法 1: mock 整个 pydantic 模块
+### Method 1: Mock the entire pydantic module
 ```python
 # tests/conftest.py
 import sys
 from unittest.mock import MagicMock
 
-# 预 mock pydantic，避免版本冲突
+# Pre-mock pydantic to avoid version conflicts
 pydantic_mock = MagicMock()
 pydantic_mock.BaseModel = MagicMock()
 pydantic_mock.Field = MagicMock()
@@ -129,28 +129,28 @@ pydantic_mock.validator = MagicMock()
 sys.modules['pydantic'] = pydantic_mock
 ```
 
-### 方法 2: fixture 中创建 Mock Config
+### Method 2: Create a Mock Config in a fixture
 ```python
-# ✅ 正确 - 不依赖真实 Pydantic
+# ✅ Correct — no dependency on real Pydantic
 @pytest.fixture
 def mock_config():
-    """创建 Mock Config，替代 Pydantic 模型。"""
+    """Create a Mock Config, replacing the Pydantic model."""
     config = MagicMock()
     config.enabled = True
     config.timeout = 30
     config.api_key = "test_key"
-    # 显式设置所有可能访问的属性
+    # Explicitly set all attributes that may be accessed
     config.host = "https://api.example.com"
     config.port = 443
     return config
 ```
 
-### 方法 3: 使用 Monkeypatch 修改配置
+### Method 3: Use monkeypatch to modify config
 ```python
-# ✅ 正确 - 不实例化 Pydantic 模型
+# ✅ Correct — bypass Pydantic by not instantiating it
 class TestChannel:
     def test_with_config(self, monkeypatch):
-        # 直接设置环境变量，绕过 Pydantic
+        # Set env vars directly to bypass Pydantic
         monkeypatch.setenv("API_KEY", "test_key")
         monkeypatch.setenv("TIMEOUT", "30")
 
@@ -158,53 +158,52 @@ class TestChannel:
         assert channel.api_key == "test_key"
 ```
 
-### 方法 4: 条件补丁 (兼容 v1/v2)
+### Method 4: Conditional patch (v1/v2 compatibility)
 ```python
 # tests/conftest.py
 try:
     from pydantic import BaseModel
 except ImportError:
-    # Pydantic v2 可能使用不同导入
     try:
         from pydantic.v1 import BaseModel
     except ImportError:
         BaseModel = MagicMock()
 
-# 测试中使用
+# Usage in tests
 @pytest.fixture
 def mock_model():
     model = MagicMock()
-    model.model_dump.return_value = {"key": "value"}  # v2 风格
-    model.dict.return_value = {"key": "value"}  # v1 风格
+    model.model_dump.return_value = {"key": "value"}  # v2 style
+    model.dict.return_value = {"key": "value"}         # v1 style
     return model
 ```
 
 ---
 
-## 快速检查清单
+## Quick Checklist
 
-生成测试代码后，检查以下项目：
+After generating test code, verify the following:
 
 ```
-□ 行长度 - 所有行 ≤ 79 字符
-□ 导入语句 - 只出现在文件顶部
-□ 无重复导入
-□ Mock 完整 - 所有访问的属性已设置
-□ 异步正确 - AsyncMock 用于异步方法
-□ 无 Pydantic 依赖 - 使用 Mock 替代真实模型
+□ Line length — all lines ≤ 79 characters
+□ Import statements — only at the top of the file
+□ No duplicate imports
+□ Mock is complete — all accessed attributes are set
+□ Async is correct — AsyncMock used for async methods
+□ No Pydantic dependency — use Mock instead of real Pydantic models
 ```
 
 ---
 
-## 自动修复命令
+## Auto-fix Commands
 
 ```bash
-# 自动格式化代码
+# Auto-format code
 black tests/ --line-length 79
 
-# 自动排序导入
+# Auto-sort imports
 isort tests/ --profile black
 
-# 检查 pylint 问题
+# Check pylint issues
 pylint tests/unit/channels/test_*.py --disable=all --enable=E501,W0404
 ```

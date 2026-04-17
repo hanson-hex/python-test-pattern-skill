@@ -1,102 +1,102 @@
-# 复杂方法测试模式
+# Complex Method Test Pattern
 
-## 模式概述
+## Overview
 
-当被测方法具有以下特征时使用此模式：
-- 多分支逻辑（if/elif/else 链）
-- 复杂的状态管理（多个实例变量交互）
-- 多步骤处理流程
-- 需要 mock 多个依赖
+Use this pattern when the method under test has:
+- Multi-branch logic (if/elif/else chains)
+- Complex state management (multiple instance variables interacting)
+- Multi-step processing flows
+- Multiple dependencies to mock
 
-## 识别复杂方法
+## Identifying Complex Methods
 
-复杂方法通常具有以下特征：
+Complex methods typically have these characteristics:
 
 ```python
 class MyService:
-    def complex_method(self, data: dict) -> Result:
-        # 1. 多分支验证
+    def complex_method(self,  dict) -> Result:
+        # 1. Multi-branch validation
         if not data.get("required_field"):
             return Result.error("missing_field")
 
-        # 2. 状态检查
+        # 2. State check
         if self._state != State.READY:
             return Result.error("not_ready")
 
-        # 3. 多步骤处理
+        # 3. Multi-step processing
         parsed = self._parser.parse(data)
         validated = self._validator.check(parsed)
         stored = self._storage.save(validated)
 
-        # 4. 副作用（事件发送等）
+        # 4. Side effects (event emission, etc.)
         self._emitter.emit("data_processed", stored.id)
 
         return Result.ok(stored)
 ```
 
-## 测试策略
+## Test Strategies
 
-### 策略 1：分支覆盖测试
+### Strategy 1: Branch Coverage Tests
 
-为每个主要分支创建独立测试：
+Create a separate test for each major branch:
 
 ```python
 class TestComplexMethodBranches:
     """Test each logical branch separately."""
 
     def test_missing_required_field_returns_error(self, service):
-        """Branch 1: 缺少必填字段."""
+        """Branch 1: missing required field."""
         result = service.complex_method({})
         assert result.is_error
         assert "missing_field" in result.message
 
     def test_not_ready_state_returns_error(self, service):
-        """Branch 2: 状态未就绪."""
+        """Branch 2: state not ready."""
         service._state = State.INITIALIZING
         result = service.complex_method({"required_field": "value"})
         assert result.is_error
         assert "not_ready" in result.message
 
     def test_valid_data_returns_ok(self, service):
-        """Happy path: 所有条件满足."""
+        """Happy path: all conditions satisfied."""
         result = service.complex_method({"required_field": "value"})
         assert result.is_ok
 ```
 
-### 策略 2：步骤验证测试
+### Strategy 2: Step Verification Tests
 
-验证多步骤流程的每个阶段：
+Verify each stage of a multi-step flow:
 
 ```python
 class TestComplexMethodSteps:
     """Verify each processing step is called correctly."""
 
     def test_parser_called_with_raw_data(self, service, mock_parser):
-        """Step 1: 解析器接收原始数据."""
+        """Step 1: parser receives raw data."""
         service.complex_method({"required_field": "value"})
         mock_parser.parse.assert_called_once_with({"required_field": "value"})
 
     def test_validator_receives_parsed_data(self, service, mock_validator):
-        """Step 2: 验证器接收解析后的数据."""
+        """Step 2: validator receives parsed data."""
         service.complex_method({"required_field": "value"})
         mock_validator.check.assert_called_once()
 
     def test_storage_receives_validated_data(self, service, mock_storage):
-        """Step 3: 存储接收验证后的数据."""
+        """Step 3: storage receives validated data."""
         service.complex_method({"required_field": "value"})
         mock_storage.save.assert_called_once()
 ```
 
-### 策略 3：副作用验证测试
+### Strategy 3: Side Effect Verification Tests
 
-验证副作用是否正确执行：
+Verify that side effects are executed correctly:
 
 ```python
 class TestComplexMethodSideEffects:
     """Verify side effects (events, state changes)."""
 
-    def test_eventEmitted_with_stored_id(self, service, mock_emitter):
-        """副作用: 事件发送包含存储 ID."""
+    def test_event_emitted_with_stored_id(self, service, mock_emitter):
+        """Side effect: event emission includes stored ID."""
         result = service.complex_method({"required_field": "value"})
         mock_emitter.emit.assert_called_once_with(
             "data_processed",
@@ -104,22 +104,22 @@ class TestComplexMethodSideEffects:
         )
 
     def test_state_unchanged_after_success(self, service):
-        """状态: 成功后保持 READY 状态."""
+        """State: remains READY after success."""
         original_state = service._state
         service.complex_method({"required_field": "value"})
         assert service._state == original_state
 ```
 
-### 策略 4：集成流程测试
+### Strategy 4: Integration Flow Tests
 
-验证完整流程的数据传递：
+Verify data transformation through the full pipeline:
 
 ```python
 class TestComplexMethodIntegration:
     """End-to-end data flow verification."""
 
     def test_data_flow_through_all_steps(self, service):
-        """验证数据在完整流程中的转换."""
+        """Verify data transformation across the full pipeline."""
         input_data = {"required_field": "input_value"}
 
         with patch.object(service._parser, 'parse') as mock_parse:
@@ -130,14 +130,14 @@ class TestComplexMethodIntegration:
 
                 result = service.complex_method(input_data)
 
-                # 验证调用链
+                # Verify call chain
                 mock_parse.assert_called_once_with(input_data)
                 mock_check.assert_called_once_with({"parsed": True})
 ```
 
-## 依赖 Mock 模式
+## Dependency Mock Patterns
 
-### Mock 工厂模式
+### Mock Factory Pattern
 
 ```python
 @pytest.fixture
@@ -161,7 +161,7 @@ def service(mock_dependencies):
     )
 ```
 
-### Mock 返回值链
+### Chained Return Values
 
 ```python
 def test_complex_method_chain(mock_dependencies):
@@ -182,9 +182,9 @@ def test_complex_method_chain(mock_dependencies):
     assert result.value.id == "record_123"
 ```
 
-## 状态机测试
+## State Machine Tests
 
-对于状态依赖的方法：
+For state-dependent methods:
 
 ```python
 class TestStateDependentMethods:
@@ -197,41 +197,41 @@ class TestStateDependentMethods:
         (State.CLOSED, Result.error("closed")),
     ])
     def test_method_with_various_states(self, service, state, expected_result):
-        """验证方法在不同状态下的行为."""
+        """Verify method behavior across different states."""
         service._state = state
         result = service.state_dependent_method()
         assert result.status == expected_result.status
 ```
 
-## 异常路径测试
+## Exception Path Tests
 
 ```python
 class TestComplexMethodExceptions:
     """Test exception handling in complex methods."""
 
     def test_parser_exception_is_caught(self, service, mock_parser):
-        """解析异常被捕获并转换为错误结果."""
+        """Parse exception is caught and converted to error result."""
         mock_parser.parse.side_effect = ParseError("Invalid format")
         result = service.complex_method({"raw": "data"})
         assert result.is_error
         assert "parse" in result.message.lower()
 
     def test_storage_exception_propagates(self, service, mock_storage):
-        """存储异常被正确处理."""
+        """Storage exception is handled correctly."""
         mock_storage.save.side_effect = StorageError("Disk full")
         with pytest.raises(StorageError):
             service.complex_method({"raw": "data"})
 ```
 
-## 最佳实践
+## Best Practices
 
-1. **单一职责测试**：每个测试只验证一个方面
-2. **命名规范**：`test_{method}_{scenario}_{expected_outcome}`
-3. **注释说明**：在测试类 docstring 中说明测试的复杂方法
-4. **分层测试**：分支测试 → 步骤测试 → 集成测试
-5. **Mock 验证**：不仅验证返回值，还要验证依赖调用
+1. **Single responsibility**: each test verifies only one aspect
+2. **Naming convention**: `test_{method}_{scenario}_{expected_outcome}`
+3. **Documentation**: describe the complex method in the test class docstring
+4. **Layered testing**: branch tests → step tests → integration tests
+5. **Mock verification**: verify not just return values, but also dependency calls
 
-## 测试模板
+## Test Template
 
 ```python
 class Test{MethodName}Complex:

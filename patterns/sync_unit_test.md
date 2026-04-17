@@ -1,10 +1,10 @@
-# 同步代码测试模式
+# Synchronous Code Test Pattern
 
-## 模式概述
+## Overview
 
-测试无外部依赖的简单函数和类时使用此模式。
+Use this pattern when testing simple functions and classes with no external dependencies.
 
-## 测试类结构
+## Test Class Structure
 
 ```python
 import pytest
@@ -12,10 +12,10 @@ from unittest.mock import Mock, MagicMock
 
 
 class Test{class_name}Init:
-    """测试初始化"""
+    """Test initialization."""
     
     def test_init_stores_basic_config(self):
-        """构造函数应存储基本配置参数"""
+        """Constructor should store basic config parameters."""
         instance = {class_name}(
             param1="value1",
             param2="value2",
@@ -25,7 +25,7 @@ class Test{class_name}Init:
         assert instance.param2 == "value2"
     
     def test_init_creates_required_data_structures(self):
-        """构造函数应初始化内部数据结构"""
+        """Constructor should initialize internal data structures."""
         instance = {class_name}()
         
         assert hasattr(instance, "_internal_dict")
@@ -33,10 +33,10 @@ class Test{class_name}Init:
 
 
 class Test{class_name}FactoryMethods:
-    """测试工厂方法"""
+    """Test factory methods."""
     
     def test_from_env_reads_env_vars(self, monkeypatch):
-        """from_env 应正确读取环境变量"""
+        """from_env should read environment variables correctly."""
         monkeypatch.setenv("{ENV_VAR}", "test_value")
         
         instance = {class_name}.from_env()
@@ -44,7 +44,7 @@ class Test{class_name}FactoryMethods:
         assert instance.config == "test_value"
     
     def test_from_env_uses_defaults(self, monkeypatch):
-        """from_env 缺失变量时应使用默认值"""
+        """from_env should use defaults when env vars are missing."""
         monkeypatch.delenv("{ENV_VAR}", raising=False)
         
         instance = {class_name}.from_env()
@@ -52,7 +52,7 @@ class Test{class_name}FactoryMethods:
         assert instance.config == "default_value"
     
     def test_from_config_uses_config_object(self):
-        """from_config 应使用配置对象的值"""
+        """from_config should use values from the config object."""
         config = Mock()
         config.enabled = True
         config.value = "test"
@@ -64,10 +64,10 @@ class Test{class_name}FactoryMethods:
 
 
 class Test{class_name}Properties:
-    """测试属性访问"""
+    """Test property access."""
     
     def test_{property}_returns_expected_value(self):
-        """{property} 应返回预期值"""
+        """{property} should return the expected value."""
         instance = {class_name}()
         
         result = instance.{property}
@@ -75,31 +75,31 @@ class Test{class_name}Properties:
         assert result == expected_value
 ```
 
-## 工具函数测试
+## Utility Function Tests
 
 ```python
 class Test{function_name}:
-    """测试 {function_name} 函数"""
+    """Tests for {function_name} function."""
     
     def test_{function}_with_valid_input(self):
-        """有效输入应返回正确结果"""
+        """Valid input should return correct result."""
         result = {function}(valid_input)
         
         assert result == expected_output
     
     def test_{function}_with_empty_input(self):
-        """空输入应处理正确"""
+        """Empty input should be handled correctly."""
         result = {function}("")
         
         assert result == expected_for_empty
     
     def test_{function}_invalid_input_raises(self):
-        """无效输入应抛出异常"""
+        """Invalid input should raise an exception."""
         with pytest.raises(ValueError, match="expected error"):
             {function}(invalid_input)
 ```
 
-## 参数化测试
+## Parametrized Tests
 
 ```python
 import pytest
@@ -118,7 +118,7 @@ def test_{method}_with_various_inputs(
     input_value,
     expected_result,
 ):
-    """测试不同输入的处理"""
+    """Test handling of various inputs."""
     result = instance.method(input_value)
     
     assert result == expected_result

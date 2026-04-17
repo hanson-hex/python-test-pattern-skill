@@ -1,12 +1,12 @@
-# 项目特定 Fixtures 扩展指南
+# Project-specific Fixtures Extension Guide
 
-本 skill 提供通用的 Python 测试 fixtures (`fixtures/generic_fixtures.py`)。
+This skill provides generic Python test fixtures (`fixtures/generic_fixtures.py`).
 
-**建议**：将项目特定的 fixtures 放在您项目的 `tests/conftest.py` 或 `tests/fixtures/` 目录中。
+**Recommendation**: put project-specific fixtures in your project's `tests/conftest.py` or `tests/fixtures/` directory.
 
-## 如何扩展
+## How to Extend
 
-### 方法 1：直接引用通用 fixtures
+### Method 1: Reference generic fixtures directly
 
 ```python
 # tests/conftest.py
@@ -17,21 +17,21 @@ from fixtures.generic_fixtures import (
     call_counter,
 )
 
-# 直接使用或 alias
+# Use directly or create aliases
 @pytest.fixture
 def http_response(mock_http_response):
     """Alias for mock_http_response."""
     return mock_http_response
 ```
 
-### 方法 2：创建项目特定的 fixtures
+### Method 2: Create project-specific fixtures
 
 ```python
 # tests/conftest.py
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 
-# 为项目特定类创建的 fixtures
+# Fixtures created for project-specific classes
 @pytest.fixture
 def mock_process():
     """
@@ -59,15 +59,15 @@ def temp_project_dir(tmp_path):
     return project_dir
 ```
 
-### 方法 3：HTTP Mock 扩展
+### Method 3: HTTP Mock Extension
 
-如果你的项目使用 HTTP 调用，参考此模式创建 HTTP mock：
+If your project makes HTTP calls, create an HTTP mock following this pattern:
 
 ```python
 # tests/fixtures/mock_http.py
 
 class MockHttpResponse:
-    """Mock HTTP response - implement based on your HTTP client."""
+    """Mock HTTP response — implement based on your HTTP client."""
 
     def __init__(self, status=200, json_data=None, text=""):
         self.status = status
@@ -117,7 +117,7 @@ class MockHttpSession:
         return len(self._calls)
 ```
 
-## 推荐的项目结构
+## Recommended Project Structure
 
 ```
 your_project/
@@ -125,17 +125,17 @@ your_project/
 │   └── your_package/
 ├── tests/
 │   ├── __init__.py
-│   ├── conftest.py          # 项目级别的 fixtures
+│   ├── conftest.py          # project-level fixtures
 │   ├── fixtures/
 │   │   ├── __init__.py
-│   │   └── mock_http.py     # HTTP 相关的 mock
+│   │   └── mock_http.py     # HTTP-related mocks
 │   └── unit/
 │       └── test_module.py
 ```
 
-## 关键原则
+## Key Principles
 
-1. **通用性优先**：Skill 只包含通用的、不绑定项目的 fixtures
-2. **项目扩展**：项目自己在 tests/conftest.py 中定义特定 fixtures
-3. **文档清晰**: 每个 fixture 都要有清晰的 docstring 和使用示例
-4. **按需使用**：不要为了 fixture 而 fixture，简单场景可以直接在测试中 mock
+1. **Generic first**: the skill only includes generic, project-agnostic fixtures
+2. **Project extension**: projects define their own fixtures in `tests/conftest.py`
+3. **Clear documentation**: every fixture should have a clear docstring and usage example
+4. **Use only what you need**: don't create fixtures for their own sake — simple cases can mock inline

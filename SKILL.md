@@ -1,212 +1,212 @@
 ---
 name: python-test-pattern
-description: Python 测试技能，通过分析源码自动生成单元测试。支持 pytest/unittest、mock、异步测试、HTTP/WebSocket mock。
+description: Python testing skill that analyzes source code and auto-generates unit tests. Supports pytest/unittest, mock, async testing, HTTP/WebSocket mock.
 version: 0.3.0
 ---
 
-# Python 测试生成器
+# Python Test Generator
 
-智能分析 Python 源码并生成高质量单元测试。
+Intelligently analyzes Python source code and generates high-quality unit tests.
 
 ## When to Activate
 
-- 生成单元测试：需要为新功能/模块补充测试时
-- 完善测试覆盖：已有测试但覆盖不足时
-- 审查测试质量：检查现有测试是否完整时
+- Generate unit tests: when new features/modules need test coverage
+- Improve test coverage: when existing tests are insufficient
+- Review test quality: when checking whether current tests are complete
 
-## 工作流程
+## Workflow
 
-### Step 1: 分析源码结构
+### Step 1: Analyze Source Structure
 
-识别被测代码的特征：
+Identify characteristics of the code under test:
 
 ```
-1. 读取源文件，识别：
-   - 类和函数定义
-   - 构造函数参数和初始化逻辑
-   - 外部依赖（HTTP、数据库、文件系统等）
-   - 同步 vs 异步方法
-   - 工厂方法（from_env, from_config）
+1. Read source file, identify:
+   - Class and function definitions
+   - Constructor parameters and initialization logic
+   - External dependencies (HTTP, database, filesystem, etc.)
+   - Synchronous vs asynchronous methods
+   - Factory methods (from_env, from_config)
 
-2. 确定测试策略：
-   - 简单函数 → 直接断言测试
-   - 外部依赖 → mock 隔离测试
-   - HTTP 调用 → HTTP mock 测试
-   - WebSocket → async mock 测试
-   - 文件操作 → temp file fixture
+2. Determine test strategy:
+   - Simple functions → direct assertion tests
+   - External dependencies → mock isolation tests
+   - HTTP calls → HTTP mock tests
+   - WebSocket → async mock tests
+   - File operations → temp file fixture
 ```
 
-### Step 2: 选择测试模式
+### Step 2: Select Test Pattern
 
-| 代码特征 | 参考模式 |
-|---------|---------|
-| 同步函数/类 | sync_unit_test.md |
-| 异步方法 | async_unit_test.md |
-| HTTP 依赖 | http_mock.md |
+| Code Characteristic | Pattern Reference |
+|---------------------|-------------------|
+| Sync functions/classes | sync_unit_test.md |
+| Async methods | async_unit_test.md |
+| HTTP dependencies | http_mock.md |
 | WebSocket | websocket_test.md |
-| 回调机制 | async_unit_test.md |
-| 工厂方法 | sync_unit_test.md |
-| 复杂方法（多分支/多步骤） | complex_method_test.md |
-| 异常路径/错误处理 | exception_test.md |
-| 第三方库缺失 | third_party_mock.md |
+| Callbacks | async_unit_test.md |
+| Factory methods | sync_unit_test.md |
+| Complex methods (multi-branch/multi-step) | complex_method_test.md |
+| Exception paths/error handling | exception_test.md |
+| Missing third-party libs | third_party_mock.md |
 
-### Step 3: 生成测试代码
+### Step 3: Generate Test Code
 
-按照 AAA 模式（Arrange-Act-Assert）生成测试：
+Generate tests following the AAA pattern (Arrange-Act-Assert):
 
 ```python
-# 1. Arrange：准备测试数据和 mock
+# 1. Arrange: prepare test data and mocks
 @pytest.fixture
 def instance():
-    """创建 {Class} 实例"""
+    """Create {Class} instance."""
     return {Class}(...)
 
-# 2. Act：执行被测代码
+# 2. Act: execute the code under test
 result = instance.method()
 
-# 3. Assert：验证结果
+# 3. Assert: verify the result
 assert result == expected
 ```
 
-### Step 4: 补充边界条件
+### Step 4: Cover Boundary Conditions
 
-为每个测试方法补充边界测试：
+Add boundary tests for each test method:
 
-| 边界类型 | 测试用例 |
-|---------|---------|
-| 空值/None | test_{method}_with_none |
-| 空列表/字符串 | test_{method}_with_empty |
-| 异常输入 | test_{method}_invalid_input_raises |
-| 极限值 | test_{method}_max_length |
-| 禁用状态 | test_{method}_when_disabled |
+| Boundary Type | Test Case |
+|---------------|-----------|
+| Null/None | test_{method}_with_none |
+| Empty list/string | test_{method}_with_empty |
+| Invalid input | test_{method}_invalid_input_raises |
+| Extreme values | test_{method}_max_length |
+| Disabled state | test_{method}_when_disabled |
 
-## 模式参考
+## Pattern Reference
 
-| 模式文件 | 适用场景 |
-|---------|---------|
-| `patterns/sync_unit_test.md` | 同步函数/类测试 |
-| `patterns/async_unit_test.md` | 异步方法测试 |
-| `patterns/http_mock.md` | HTTP 依赖 mock |
-| `patterns/class_based_test.md` | 测试类组织方式 |
-| `patterns/patch_patterns.md` | Patch 用法详解 |
-| `patterns/third_party_mock.md` | 第三方库缺失 mock |
-| `patterns/complex_method_test.md` | 复杂方法测试 |
-| `patterns/exception_test.md` | 异常路径测试 |
-| `patterns/websocket_test.md` | WebSocket 测试 |
-| `patterns/test_debugging.md` | 测试调试与问题处理 |
-| `patterns/mock_best_practices.md` | Mock 对象最佳实践 |
+| Pattern File | Use Case |
+|--------------|----------|
+| `patterns/sync_unit_test.md` | Sync function/class tests |
+| `patterns/async_unit_test.md` | Async method tests |
+| `patterns/http_mock.md` | HTTP dependency mock |
+| `patterns/class_based_test.md` | Test class organization |
+| `patterns/patch_patterns.md` | Patch usage guide |
+| `patterns/third_party_mock.md` | Missing third-party lib mock |
+| `patterns/complex_method_test.md` | Complex method tests |
+| `patterns/exception_test.md` | Exception path tests |
+| `patterns/websocket_test.md` | WebSocket tests |
+| `patterns/test_debugging.md` | Test debugging & troubleshooting |
+| `patterns/mock_best_practices.md` | Mock object best practices |
 
 ## Fixtures
 
-技能提供以下通用 fixtures (`fixtures/generic_fixtures.py`):
+The skill provides the following common fixtures (`fixtures/generic_fixtures.py`):
 
-| Fixture | 用途 |
-|---------|------|
-| `async_noop` | 异步空操作函数 |
-| `async_return_value` | 返回特定值的异步函数工厂 |
-| `mock_http_response` | HTTP 响应 mock 工厂 |
-| `mock_http_session` | HTTP 会话 mock |
-| `temp_dir` | 临时目录 (tmp_path alias) |
-| `call_counter` | 调用计数器 |
-| `event_collector` | 事件收集器 |
-| `empty_values` | 常见空值列表 (边界测试) |
+| Fixture | Purpose |
+|---------|---------|
+| `async_noop` | Async no-op function |
+| `async_return_value` | Factory for async functions that return specific values |
+| `mock_http_response` | HTTP response mock factory |
+| `mock_http_session` | HTTP session mock |
+| `temp_dir` | Temporary directory (tmp_path alias) |
+| `call_counter` | Call counter |
+| `event_collector` | Event collector |
+| `empty_values` | Common empty values list (boundary testing) |
 
-项目特定的 fixtures 应放在项目的 `tests/conftest.py` 中。
+Project-specific fixtures should be placed in the project's `tests/conftest.py`.
 
 ## HTTP Mock
 
 ```python
-# 创建 mock 响应
+# Create mock response
 mock_resp = mock_http_response(
     status=200,
     json_data={"success": True}
 )
 
-# 配置 mock session
+# Configure mock session
 mock_session = MagicMock()
 mock_session.post = AsyncMock(return_value=mock_resp)
 
-# 执行测试
+# Run the test
 result = await instance.api_call()
 assert result is True
 mock_session.post.assert_called_once()
 ```
 
-对于复杂的 HTTP mock 需求，请在项目中创建自己的 MockHttpSession。
+For complex HTTP mock needs, create your own MockHttpSession in the project.
 
-## 代码质量保证
+## Code Quality
 
-生成测试后，检查以下常见问题：
+After generating tests, check for common issues:
 
-| 检查项 | 问题 | 解决方案 |
-|--------|------|----------|
-| **行长度** | E501: Line too long | 使用括号换行或变量提取 |
-| **重复导入** | W0404: Reimport | 统一放在文件顶部导入 |
-| **Pydantic 版本** | 测试环境导入失败 | Mock 整个模块或避开 Pydantic |
+| Check | Problem | Solution |
+|-------|---------|----------|
+| **Line length** | E501: Line too long | Use parentheses for line breaks or extract variables |
+| **Duplicate imports** | W0404: Reimport | Consolidate at the top of the file |
+| **Pydantic version** | Import failure in test env | Mock the entire module or avoid Pydantic |
 
-详见 `patterns/code_quality_fixes.md`
+See `patterns/code_quality_fixes.md` for details.
 
-## 常见问题
+## FAQ
 
-### Q1: 如何处理缺失的第三方库依赖？
+### Q1: How to handle missing third-party library dependencies?
 
-在 `tests/conftest.py` 中统一 mock：
+Mock them in `tests/conftest.py`:
 
 ```python
 import sys
 from unittest.mock import MagicMock
 
-# Mock 缺失的第三方库
+# Mock missing third-party libraries
 for module in ['thirdparty_sdk', 'external_api']:
     sys.modules[module] = MagicMock()
 ```
 
-详见 `patterns/third_party_mock.md`
+See `patterns/third_party_mock.md` for details.
 
-### Q2: 如何避免 pre-commit 代码风格错误？
+### Q2: How to avoid pre-commit style errors?
 
-生成测试时注意：
+When generating tests, ensure:
 
-1. **行长度**：限制在 79 字符内
-2. **未使用变量**：删除或改为 `_`
-3. **导入顺序**：标准库 → 第三方 → 本地
-4. **类型注解**：避免前向引用，使用字符串引号
+1. **Line length**: limit to 79 characters
+2. **Unused variables**: delete or rename to `_`
+3. **Import order**: stdlib → third-party → local
+4. **Type annotations**: avoid forward references, use string quotes
 
-示例：
+Example:
 ```python
-# ✅ 正确
-def test_example(my_client):  # 不用类型注解
+# ✅ Correct
+def test_example(my_client):  # no type annotation needed
     pass
 
-# ❌ 避免
-from __future__ import annotations  # Python 3.7+ 可用
-# 但 mypy 可能报错，建议省略测试函数的返回类型注解
+# ❌ Avoid
+from __future__ import annotations  # usable in Python 3.7+
+# but mypy may error — prefer omitting return type annotations in test functions
 ```
 
-### Q3: HTTP Mock 选择哪个模式？
+### Q3: Which HTTP mock pattern should I use?
 
-根据项目使用的 HTTP 库选择：
+Choose based on the HTTP library the project uses:
 
-| 库 | Mock 类 |
-|----|---------|
+| Library | Mock Class |
+|---------|------------|
 | aiohttp | MockAiohttpSession |
 | httpx | MockHttpxClient |
 | requests | MockRequestsResponse |
 
-### Q4: 测试类如何组织？
+### Q4: How should test classes be organized?
 
-按优先级和功能组织：
+Organize by priority and functionality:
 
 ```python
-class Test{ClassName}Init:  # P0: 初始化
-class Test{ClassName}FactoryMethods:  # P0: 工厂方法
-class Test{ClassName}CoreFeature:  # P1: 核心功能
-class Test{ClassName}Utilities:  # P2: 工具方法
+class Test{ClassName}Init:          # P0: initialization
+class Test{ClassName}FactoryMethods: # P0: factory methods
+class Test{ClassName}CoreFeature:   # P1: core features
+class Test{ClassName}Utilities:     # P2: utility methods
 ```
 
-## 参考资源
+## References
 
-### Skill 内部
+### Skill Internal
 
 - patterns/sync_unit_test.md
 - patterns/async_unit_test.md
@@ -214,12 +214,12 @@ class Test{ClassName}Utilities:  # P2: 工具方法
 - patterns/class_based_test.md
 - patterns/patch_patterns.md
 - patterns/third_party_mock.md
-- patterns/complex_method_test.md (新增)
-- patterns/exception_test.md (新增)
-- patterns/websocket_test.md (新增)
+- patterns/complex_method_test.md
+- patterns/exception_test.md
+- patterns/websocket_test.md
 - fixtures/generic_fixtures.py
 
-### 外部文档
+### External Docs
 
-- pytest 官方文档：https://docs.pytest.org/
-- unittest.mock 文档：https://docs.python.org/3/library/unittest.mock.html
+- pytest official docs: https://docs.pytest.org/
+- unittest.mock docs: https://docs.python.org/3/library/unittest.mock.html

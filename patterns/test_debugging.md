@@ -1,25 +1,26 @@
-# 测试调试与问题处理模式
+# Test Debugging & Troubleshooting Pattern
 
-## 常见测试失败模式及解决方案
+## Common Test Failure Patterns and Solutions
 
-### 模式 1: MagicMock 默认行为导致意外代码路径
+### Pattern 1: MagicMock Default Behavior Causes Unexpected Code Paths
 
-**现象:**
-测试中使用 MagicMock 模拟对象，但未设置某些属性，导致代码进入意外的分支。
+**Symptom:**
+A test uses `MagicMock` to simulate an object but leaves certain attributes unset,
+causing the code to enter an unexpected branch.
 
 ```python
-# 问题示例
+# Problem
 mock_message = MagicMock()
 mock_message.text = "Hello"
-# 未设置 photo 属性
+# photo attribute not set
 
-# 代码中
-if message.photo:  # MagicMock 返回一个新的 MagicMock，判断为 True
-    await download_photo()  # 意外执行
+# In the code under test
+if message.photo:  # MagicMock returns a new MagicMock, which is truthy
+    await download_photo()  # unexpectedly executed
 ```
 
-**解决方案:**
-显式设置所有可能触发条件分支的属性为 None 或空值。
+**Solution:**
+Explicitly set all attributes that could trigger conditional branches to `None` or an empty value.
 
 ```python
 mock_message = MagicMock()
@@ -31,23 +32,24 @@ mock_message.voice = None
 mock_message.audio = None
 ```
 
-**应用到 Skill:**
-当生成测试时，检查被测代码中的所有 `getattr()` 或属性访问，确保 Mock 对象显式设置了这些属性。
+**Skill application:**
+When generating tests, inspect all `getattr()` calls and attribute accesses in the code under test.
+Ensure Mock objects explicitly set those attributes.
 
 ---
 
-### 模式 2: 异步函数 Mock 问题
+### Pattern 2: Async Function Mock Issues
 
-**现象:**
-代码使用 `await` 调用 Mock 方法，但 Mock 不是异步的。
+**Symptom:**
+Code uses `await` to call a mock method, but the mock is not async.
 
 ```python
-# 问题
+# Problem
 tg_file = await bot.get_file(file_id)  # TypeError: object MagicMock can't be used in 'await'
 ```
 
-**解决方案:**
-使用 `AsyncMock` 替代 `MagicMock`。
+**Solution:**
+Use `AsyncMock` instead of `MagicMock`.
 
 ```python
 from unittest.mock import AsyncMock
@@ -58,111 +60,111 @@ mock_bot.get_file = AsyncMock(return_value=mock_file)
 
 ---
 
-### 模式 3: Config 属性为 None 时的处理
+### Pattern 3: Config Attribute Is None
 
-**现象:**
-代码使用 `getattr(config, "enabled", False)`，但当 `config.enabled = None` 时返回 None。
+**Symptom:**
+Code uses `getattr(config, "enabled", False)`, but when `config.enabled = None`, it returns `None`.
 
 ```python
-# 代码实现
-enabled = getattr(config, "enabled", False)  # 当 enabled=None 时返回 None
+# Code implementation
+enabled = getattr(config, "enabled", False)  # returns None when enabled=None
 
-# 测试期望
-assert channel.enabled is False  # 失败，因为实际是 None
+# Test expectation
+assert channel.enabled is False  # fails — actual value is None
 ```
 
-**解决方案:**
-测试应使用实际的布尔值而非 None，或测试实际行为。
+**Solution:**
+Use actual boolean values in tests rather than `None`, or test the actual behavior.
 
 ```python
-# 修改测试
+# Fix the test
 class MockConfig:
-    enabled = False  # 使用 False 而不是 None
+    enabled = False  # use False, not None
 ```
 
-**注意:** 
-如果代码确实需要处理 None，应该使用 `getattr(config, "enabled", False) or False`。
+**Note:**
+If the code genuinely needs to handle `None`, it should use `getattr(config, "enabled", False) or False`.
 
 ---
 
-### 模式 4: 私有属性 vs 公有属性
+### Pattern 4: Private vs Public Attributes
 
-**现象:**
-代码存储为私有属性 `_filter_tool_messages`，但测试期望公有访问 `filter_tool_messages`。
+**Symptom:**
+Code stores a value in a private attribute `_filter_tool_messages`, but the test expects a public access `filter_tool_messages`.
 
-**解决方案:**
-测试应使用实际代码中的属性名。
+**Solution:**
+Tests should use the actual attribute name from the code.
 
 ```python
-# 而不是
+# Instead of
 assert channel.filter_tool_messages is True
 
-# 使用
+# Use
 assert channel._filter_tool_messages is True
 ```
 
 ---
 
-### 模式 5: caplog 日志捕获问题
+### Pattern 5: caplog Log Capture Issues
 
-**现象:**
-使用 pytest 的 `caplog` fixture 但无法捕获日志。
+**Symptom:**
+Using pytest's `caplog` fixture but unable to capture logs.
 
-**原因:**
-应用日志配置可能设置了 `propagate = False`，或使用了特定的 logger 名称。
+**Root cause:**
+The application logging configuration may have set `propagate = False`, or uses a specific logger name.
 
-**解决方案:**
-避免依赖日志内容进行断言。改为验证行为或返回值。
+**Solution:**
+Avoid asserting on log content. Verify behavior or return values instead.
 
 ```python
-# 而不是
+# Instead of
 with caplog.at_level("WARNING"):
     await channel.send_media(...)
 assert "no URL found" in caplog.text
 
-# 使用
+# Use
 result = await channel.send_media(...)
-assert result is None  # 验证行为
+assert result is None  # verify behavior
 ```
 
 ---
 
-### 模式 6: 文件路径问题
+### Pattern 6: File Path Issues
 
-**现象:**
-测试使用绝对路径如 `/config/media`，在只读文件系统上失败。
+**Symptom:**
+Tests use absolute paths like `/config/media`, which fail on read-only filesystems.
 
-**解决方案:**
-测试应使用临时目录。
+**Solution:**
+Tests should use temporary directories.
 
 ```python
-# 使用 pytest 的 tmp_path fixture
+# Use pytest's tmp_path fixture
 async def test_with_temp_dir(self, tmp_path: Path):
     media_dir = tmp_path / ".copaw" / "media"
     media_dir.mkdir(parents=True, exist_ok=True)
-    # 使用 media_dir 进行测试
+    # use media_dir in tests
 ```
 
 ---
 
-## 测试修复最佳实践
+## Test Fix Best Practices
 
-1. **保持测试与代码行为一致**
-   - 如果代码不处理某些边界情况，不要测试这些边界
-   - 测试应该验证实际行为，而不是期望行为
+1. **Keep tests aligned with code behavior**
+   - If the code doesn't handle certain edge cases, don't test them
+   - Tests should verify actual behavior, not desired behavior
 
-2. **Mock 对象配置完整**
-   - 列出所有在代码中访问的属性
-   - 显式设为 None 或适当的默认值
+2. **Fully configure Mock objects**
+   - List all attributes accessed in the code
+   - Explicitly set them to `None` or appropriate defaults
 
-3. **避免测试日志输出**
-   - 日志格式和内容可能变化
-   - 测试行为和结果，而不是日志消息
+3. **Avoid asserting on log output**
+   - Log format and content may change
+   - Test behavior and results, not log messages
 
-4. **使用临时资源**
-   - 文件系统操作使用 tmp_path
-   - 数据库操作使用内存数据库或临时文件
+4. **Use temporary resources**
+   - Filesystem operations: use `tmp_path`
+   - Database operations: use in-memory DB or temp files
 
-5. **检查异步调用**
-   - 确保 Mock 异步方法使用 AsyncMock
-   - 同步方法不要用 @pytest.mark.asyncio 标记
+5. **Verify async calls**
+   - Ensure async mock methods use `AsyncMock`
+   - Don't mark sync test methods with `@pytest.mark.asyncio`

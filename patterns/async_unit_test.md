@@ -1,16 +1,16 @@
-# 异步代码测试模式
+# Async Code Test Pattern
 
-## 模式概述
+## Overview
 
-测试包含 `async def` 的方法时使用此模式。
+Use this pattern when testing methods defined with `async def`.
 
-## 关键点
+## Key Rules
 
-1. **只在 async def 方法上使用 @pytest.mark.asyncio**
-2. **不要在类或全局使用 pytestmark = pytest.mark.asyncio**
-3. **AsyncMock 用于 mock 异步方法**
+1. **Only use `@pytest.mark.asyncio` on async test methods**
+2. **Do NOT use `pytestmark = pytest.mark.asyncio` at class or module level**
+3. **Use `AsyncMock` for mocking async methods**
 
-## 模板代码
+## Template
 
 ```python
 import pytest
@@ -19,10 +19,10 @@ from unittest.mock import AsyncMock, MagicMock
 
 class Test{class_name}Async:
     """
-    异步方法测试类。
-    
-    注意：不要在类上使用 @pytest.mark.asyncio
-    只对异步测试方法使用装饰器
+    Async method test class.
+
+    Note: Do NOT use @pytest.mark.asyncio on the class.
+    Only use the decorator on individual async test methods.
     """
     
     @pytest.fixture
@@ -43,55 +43,55 @@ class Test{class_name}Async:
     
     @pytest.mark.asyncio
     async def test_{method}_success(self, instance):
-        """测试 {method} 成功执行 - 异步方法需要装饰器"""
+        """Test {method} executes successfully — async methods require the decorator."""
         result = await instance.{method}()
         assert result is not None
     
     @pytest.mark.asyncio
     async def test_{method}_when_disabled(self, instance):
-        """测试禁用时 {method} 不执行操作"""
+        """Test {method} does nothing when disabled."""
         instance.enabled = False
         result = await instance.{method}()
         assert result is None
     
     def test_sync_method(self, instance):
-        """同步方法不需要 @pytest.mark.asyncio"""
+        """Sync methods do NOT need @pytest.mark.asyncio."""
         result = instance.sync_method()
         assert result == expected
 ```
 
-## ❌ 避免全局 pytestmark
+## ❌ Avoid Global pytestmark
 
 ```python
-# ❌ 错误：这会导致所有测试（包括同步）都被当作异步处理
+# ❌ Wrong: this marks all tests (including sync) as async
 pytestmark = pytest.mark.asyncio
 
-# ✅ 正确：只为需要的异步方法添加装饰器
+# ✅ Correct: only add the decorator to async methods
 @pytest.mark.asyncio
 async def test_async(): ...
 
-def test_sync(): ...  # 同步测试不需要装饰器
+def test_sync(): ...  # sync tests need no decorator
 ```
 
-## AsyncMock 详细用法
+## AsyncMock Usage
 
 ```python
-# mock 异步方法返回特定值
+# mock async method to return a specific value
 mock_async_method = AsyncMock(return_value="expected_result")
 
-# mock 异步方法抛出异常
+# mock async method to raise an exception
 mock_async_method = AsyncMock(side_effect=Exception("error"))
 
-# mock 异步生成器
+# mock async generator
 async def mock_generator():
     yield item1
     yield item2
 mock_async_gen = AsyncMock(side_effect=mock_generator)
 ```
 
-## 第三方库 Mock
+## Third-party Library Mock
 
-当测试依赖第三方库（如 paho-mqtt）时：
+When tests depend on third-party libraries (e.g., paho-mqtt):
 
 ```python
 @pytest.fixture
@@ -103,7 +103,7 @@ def mock_mqtt_client():
     client.publish = Mock()
     return client
 
-# 在测试中使用
+# Usage in tests
 async def test_start(self, mock_mqtt_client):
     with patch("path.to.module.mqtt.Client", return_value=mock_mqtt_client):
         await instance.start()
@@ -111,24 +111,24 @@ async def test_start(self, mock_mqtt_client):
     mock_mqtt_client.connect.assert_called_once()
 ```
 
-## Patch 路径注意事项
+## Patch Path Notes
 
-当测试内部导入的类时，需要 patch 正确的模块路径：
+When patching a class that is imported inside the module under test:
 
 ```python
-# 场景：被测代码内部导入
+# Scenario: runtime import inside the module under test
 # module.py
 async def start():
-    from external.service import ExternalService  # 运行时导入
+    from external.service import ExternalService  # imported at runtime
     service = ExternalService()
     return await service.connect()
 
-# 测试
-# ❌ 错误：patch 被测模块位置
+# Test
+# ❌ Wrong: patch the location in the module under test
 with patch("module.ExternalService"):
     ...
 
-# ✅ 正确：patch 原始导入源
+# ✅ Correct: patch the original import source
 with patch("external.service.ExternalService") as MockService:
     mock_instance = MockService.return_value
     mock_instance.connect = AsyncMock(return_value=True)
@@ -136,24 +136,24 @@ with patch("external.service.ExternalService") as MockService:
     assert result is True
 ```
 
-## 日志测试注意事项
+## Logging Test Notes
 
-**建议**：优先测试功能行为而非日志输出。
+**Recommendation**: prefer testing functional behavior over log output.
 
 ```python
-# ✅ 推荐：测试功能行为
+# ✅ Recommended: test functional behavior
 assert instance.connected is False
 
-# ⚠️ 可选：测试日志（依赖 logging 配置）
+# ⚠️ Optional: test logs (depends on logging configuration)
 caplog.set_level("ERROR", logger="module.name")
 assert "error message" in caplog.text
 ```
 
-不同项目可能有不同的 logging 配置，日志断言可能导致测试不稳定。
+Different projects may have different logging configurations — log assertions can make tests brittle.
 
-## 注意事项
+## Notes
 
-1. 不要在 async test 中使用 time.sleep，改用 asyncio.sleep
-2. 并发测试使用 asyncio.gather
-3. 测试超时使用 asyncio.wait_for
-4. Mockito 对象会被设置为属性，即使方法抛出异常
+1. Never use `time.sleep` in async tests; use `asyncio.sleep` instead
+2. Use `asyncio.gather` for concurrency tests
+3. Use `asyncio.wait_for` for test timeouts
+4. Mock objects remain set as attributes even if a method raises an exception

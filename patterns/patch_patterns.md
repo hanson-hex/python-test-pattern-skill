@@ -1,14 +1,14 @@
-# Python Patch 模式
+# Python Patch Patterns
 
-## 何时使用 Patch
+## When to Use Patch
 
-- 替换外部依赖（HTTP、数据库、文件系统）
-- 控制不可预测的行为（随机数、时间）
-- 模拟故障路径
+- Replace external dependencies (HTTP, database, filesystem)
+- Control unpredictable behavior (random numbers, time)
+- Simulate failure paths
 
-## 基本 Patch 模式
+## Basic Patch Patterns
 
-### 1. Patch 函数
+### 1. Patch a Function
 
 ```python
 from unittest.mock import patch
@@ -20,7 +20,7 @@ def test_function():
         assert result == "expected"
 ```
 
-### 2. Patch 类
+### 2. Patch a Class
 
 ```python
 def test_class():
@@ -34,7 +34,7 @@ def test_class():
         assert result == "expected"
 ```
 
-### 3. Patch 对象属性
+### 3. Patch an Object Attribute
 
 ```python
 def test_attribute():
@@ -43,30 +43,30 @@ def test_attribute():
         assert result == "expected"
 ```
 
-## Patch 路径规则
+## Patch Path Rules
 
-**关键原则**：patch 对象被导入的位置，而不是定义的位置。
+**Key principle**: patch where the object is *imported*, not where it is *defined*.
 
 ```python
-# 被测代码 (mymodule.py)
+# Code under test (mymodule.py)
 from external.lib import SomeClass
 
 def use_it():
-    obj = SomeClass()  # 使用 SomeClass
+    obj = SomeClass()  # uses SomeClass
 
-# 测试代码
-# ❌ 错误：patch 定义位置
+# Test code
+# ❌ Wrong: patch the definition location
 with patch("external.lib.SomeClass"):
     ...
 
-# ✅ 正确：patch 被导入的位置
+# ✅ Correct: patch the import location
 with patch("mymodule.SomeClass"):
     ...
 ```
 
-## 常见模式
+## Common Patterns
 
-### 上下文管理器
+### Context Manager
 
 ```python
 with patch("module.target") as mock:
@@ -74,7 +74,7 @@ with patch("module.target") as mock:
     mock.assert_called_once()
 ```
 
-### 装饰器
+### Decorator
 
 ```python
 @patch("module.target1")
@@ -83,7 +83,7 @@ def test_function(mock2, mock1):
     ...
 ```
 
-### 叠加多个 Patch
+### Multiple Patches
 
 ```python
 with patch("module.target1") as mock1:
@@ -91,18 +91,18 @@ with patch("module.target1") as mock1:
         result = test_function()
 ```
 
-## 启动时导入 vs 运行时导入
+## Module-level Import vs Runtime Import
 
-### 模块级别导入（常见）
+### Module-level Import (common)
 
 ```python
 # module.py
-from external.service import ExternalService  # 模块加载时导入
+from external.service import ExternalService  # imported at module load
 
 def start():
     service = ExternalService()
 
-# test.py - patch 导入位置（被测模块中的引用）
+# test.py — patch the import location (the reference in the module under test)
 with patch("module.ExternalService") as MockService:
     mock_instance = MockService.return_value
     mock_instance.connect.return_value = True
@@ -110,15 +110,15 @@ with patch("module.ExternalService") as MockService:
     assert result is True
 ```
 
-### 函数内部导入（延迟加载）
+### Function-level Import (lazy loading)
 
 ```python
 # module.py
 def start():
-    from external.service import ExternalService  # 运行时导入
+    from external.service import ExternalService  # imported at runtime
     service = ExternalService()
 
-# test.py - 需要 patch 导入源（原始定义位置）
+# test.py — must patch the original source (definition location)
 with patch("external.service.ExternalService") as MockService:
     mock_instance = MockService.return_value
     mock_instance.connect.return_value = True
@@ -126,16 +126,16 @@ with patch("external.service.ExternalService") as MockService:
     assert result is True
 ```
 
-## 调试 Patch 问题
+## Debugging Patch Issues
 
-如果 patch 不生效：
+If a patch is not taking effect:
 
-1. 检查 patch 路径是否正确
-2. 确认是在调用位置 patch，而不是定义位置
-3. 对于延迟导入，确保 patch 在导入之前设置
+1. Check that the patch path is correct
+2. Confirm you are patching the call site, not the definition site
+3. For lazy imports, ensure the patch is set up before the import runs
 
 ```python
-# 调试：打印实际被调用的对象
+# Debug: print the actual object being called
 from module import target
-print(target)  # 看是否被 mock
+print(target)  # check if it has been mocked
 ```

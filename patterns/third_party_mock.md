@@ -1,51 +1,52 @@
-# 第三方库缺失 Mock 模式
+# Missing Third-party Library Mock Pattern
 
-## 模式概述
+## Overview
 
-当被测代码依赖未安装的第三方库（如企业微信的 `aibot`、飞书的 `lark-oapi` 等）时使用此模式。
+Use this pattern when the code under test depends on third-party libraries that are not installed
+(e.g., enterprise WeChat's `aibot`, Feishu's `lark-oapi`, etc.).
 
-## 快速诊断
+## Quick Diagnosis
 
-如果遇到以下错误，说明需要使用此模式：
+If you see one of the following errors, this pattern applies:
 
 ```
 ModuleNotFoundError: No module named 'xxx'
 ```
 
-或 pytest 收集测试时失败：
+Or pytest fails to collect tests:
 
 ```
 ERROR tests/unit/test_xxx.py - ModuleNotFoundError: No module named 'xxx'
 ```
 
-## 问题场景
+## Problem Scenario
 
 ```python
 # src/myapp/external/websocket_client.py
-from thirdparty_sdk import WSClient, WSClientOptions  # 未安装的第三方库
+from thirdparty_sdk import WSClient, WSClientOptions  # uninstalled third-party lib
 
 class MyClient(BaseClient):
     def start(self):
-        client = WSClient()  # 依赖第三方库
+        client = WSClient()  # depends on third-party lib
 ```
 
-直接导入会导致 `ModuleNotFoundError`。
+A direct import raises `ModuleNotFoundError`.
 
-## 解决方案
+## Solutions
 
-### 方法 1：在 conftest.py 中 Mock 整个模块（推荐）
+### Method 1: Mock the entire module in conftest.py (Recommended)
 
 ```python
 # tests/conftest.py
 import sys
 from unittest.mock import MagicMock
 
-# Mock 缺失的第三方库
+# Mock missing third-party libraries
 sys.modules['thirdparty_sdk'] = MagicMock()
 sys.modules['external_api'] = MagicMock()
 ```
 
-### 方法 2：在测试文件中延迟导入
+### Method 2: Lazy import inside the test file
 
 ```python
 # tests/unit/test_client.py
@@ -58,7 +59,7 @@ def test_init():
         client = MyClient(...)
 ```
 
-### 方法 3：Fixture 中动态导入
+### Method 3: Dynamic import inside a fixture
 
 ```python
 @pytest.fixture
@@ -73,16 +74,16 @@ def client_instance(mock_handler, tmp_path):
         yield client
 ```
 
-## 完整示例
+## Complete Example
 
-### conftest.py 配置
+### conftest.py Configuration
 
 ```python
 # tests/conftest.py
 import sys
 from unittest.mock import MagicMock
 
-# 预 mock 所有缺失的第三方库
+# Pre-mock all missing third-party libraries
 _MISSING_MODULES = {
     'thirdparty_sdk',
     'external_api',
@@ -94,7 +95,7 @@ for module in _MISSING_MODULES:
         sys.modules[module] = MagicMock()
 ```
 
-### 测试中使用
+### Usage in Tests
 
 ```python
 # tests/unit/test_client.py
@@ -116,25 +117,24 @@ class TestMyClient:
         assert result is None
 ```
 
-## 注意事项
+## Notes
 
-1. **在 conftest.py 中统一处理**：避免每个测试文件都重复 mock
-2. **mock 的内容**：只需要 mock 被测代码实际使用的类/函数
-3. **类型注解**：如果第三方库用于类型注解，使用 `TYPE_CHECKING` 保护
+1. **Centralize in conftest.py**: avoid duplicating mock setup across test files
+2. **Mock only what is used**: only mock the classes/functions actually accessed by the code under test
+3. **Type annotations**: if the third-party library is used only for type annotations, use `TYPE_CHECKING`:
 
 ```python
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from thirdparty_sdk import WSClient  # 仅类型检查时导入
+    from thirdparty_sdk import WSClient  # imported only during type checking
 ```
 
-## 常见场景
+## Common Scenarios
 
-| 场景 | 库示例 | Mock 建议 |
-|------|--------|-----------|
+| Scenario | Library Example | Mock Suggestion |
+|----------|-----------------|-----------------|
 | WebSocket SDK | `websocket_sdk` | Mock Client, Connection |
 | Message Queue | `mq_client` | Mock Producer, Consumer |
 | AI/ML API | `ai_platform` | Mock Model, Prediction |
 | Payment Gateway | `payment_sdk` | Mock Payment, Refund |
-

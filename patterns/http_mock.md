@@ -1,12 +1,12 @@
-# HTTP Mock 测试模式
+# HTTP Mock Test Pattern
 
-## 模式概述
+## Overview
 
-测试需要调用外部 HTTP API 的代码时使用此模式。
+Use this pattern when testing code that calls external HTTP APIs.
 
-## 按 HTTP 库分类的 Mock 模式
+## Mock Patterns by HTTP Library
 
-不同 HTTP 库需要不同的 mock 类：
+Different HTTP libraries require different mock classes:
 
 ### 1. aiohttp
 
@@ -105,7 +105,7 @@ class MockHttpxClient:
         return MockHttpxResponse(status_code=404)
 ```
 
-### 3. requests（同步 HTTP）
+### 3. requests (synchronous HTTP)
 
 ```python
 class MockRequestsResponse:
@@ -130,9 +130,9 @@ def test_sync_api_call():
     assert result is True
 ```
 
-## 基本 HTTP Mock（通用）
+## Basic HTTP Mock (Generic)
 
-使用技能提供的通用 fixtures：
+Use the common fixtures provided by the skill:
 
 ```python
 import pytest
@@ -141,42 +141,42 @@ from unittest.mock import AsyncMock, MagicMock
 
 @pytest.mark.asyncio
 class Test{class_name}HTTP:
-    """测试 HTTP 调用"""
+    """Test HTTP calls."""
 
     async def test_{api_call}_success(
         self,
         instance,
-        mock_http_response,  # 来自 skill fixtures
+        mock_http_response,  # from skill fixtures
     ):
-        """测试 API 调用成功"""
-        # 创建 mock 响应
+        """Test successful API call."""
+        # Create mock response
         mock_resp = mock_http_response(
             status=200,
             json_data={"success": True, "data": "result"},
         )
 
-        # 创建 mock session
+        # Create mock session
         mock_session = MagicMock()
         mock_session.post = AsyncMock(return_value=mock_resp)
 
-        # 注入 mock
+        # Inject mock
         instance._http = mock_session
 
-        # 执行测试
+        # Execute test
         result = await instance.{method}()
 
-        # 验证结果
+        # Verify result
         assert result is True
         mock_session.post.assert_called_once()
 ```
 
-## 多个顺序请求
+## Multiple Sequential Requests
 
 ```python
 async def test_{method}_multiple_requests(self, instance, mock_http_response):
-    """测试多个顺序 HTTP 请求"""
+    """Test multiple sequential HTTP requests."""
 
-    # 创建多个 mock 响应
+    # Create multiple mock responses
     token_response = mock_http_response(
         status=200,
         json_data={"token": "abc123"},
@@ -186,7 +186,7 @@ async def test_{method}_multiple_requests(self, instance, mock_http_response):
         json_data={"result": "success"},
     )
 
-    # 配置 mock session 按顺序返回
+    # Configure mock session to return responses in order
     mock_session = MagicMock()
     mock_session.post = AsyncMock(side_effect=[token_response, api_response])
 
@@ -197,13 +197,13 @@ async def test_{method}_multiple_requests(self, instance, mock_http_response):
     assert mock_session.post.call_count == 2
 ```
 
-## 错误响应处理
+## Error Response Handling
 
 ```python
 async def test_{method}_handles_api_error(self, instance, mock_http_response):
-    """测试处理 API 错误响应"""
+    """Test handling of API error responses."""
 
-    # 模拟 API 返回错误（HTTP 200 但业务错误）
+    # Simulate API returning a business error (HTTP 200 but error body)
     error_response = mock_http_response(
         status=200,
         json_data={"errcode": 40001, "errmsg": "invalid"},
@@ -215,12 +215,12 @@ async def test_{method}_handles_api_error(self, instance, mock_http_response):
 
     result = await instance.{method}()
 
-    # 验证错误处理
-    assert result is False  # 或断言抛出异常
+    # Verify error handling
+    assert result is False  # or assert an exception is raised
 
 
 async def test_{method}_handles_http_error(self, instance, mock_http_response):
-    """测试处理 HTTP 5xx 错误"""
+    """Test handling of HTTP 5xx errors."""
 
     error_response = mock_http_response(
         status=500,
@@ -236,11 +236,11 @@ async def test_{method}_handles_http_error(self, instance, mock_http_response):
     assert result is False
 ```
 
-## 验证请求参数
+## Verify Request Parameters
 
 ```python
 async def test_{method}_with_correct_params(self, instance, mock_http_response):
-    """测试使用正确的参数调用 API"""
+    """Test API is called with correct parameters."""
 
     mock_resp = mock_http_response(status=200, json_data={})
     mock_session = MagicMock()
@@ -249,19 +249,19 @@ async def test_{method}_with_correct_params(self, instance, mock_http_response):
 
     await instance.send_message("user123", "Hello")
 
-    # 验证调用参数
+    # Verify call arguments
     call_args = mock_session.post.call_args
     assert call_args[0][0] == "https://api.example.com/send"
     assert "user123" in str(call_args)
 ```
 
-## 高级 HTTP Mock
+## Advanced HTTP Mock
 
-如果你的项目需要更复杂的 HTTP mock（如请求/响应匹配、自动验证等），
-建议在你的项目中创建自己的 MockHttpSession：
+For more complex HTTP mock needs (e.g., request/response matching, auto-validation),
+create your own MockHttpSession in the project:
 
 ```python
-# 在你的项目中: tests/fixtures/http_mock.py
+# In your project: tests/fixtures/http_mock.py
 
 class MockHttpResponse:
     """Mock HTTP response matching your HTTP client interface."""
@@ -312,4 +312,4 @@ class MockHttpSession:
         return len(self._calls)
 ```
 
-参考 `patterns/project_specific_fixtures.md` 获取更多指导。
+See `patterns/project_specific_fixtures.md` for more guidance.

@@ -1,76 +1,77 @@
-# Mock 对象最佳实践
+# Mock Object Best Practices
 
-## 生成测试时的 Mock 配置检查清单
+## Mock Configuration Checklist When Writing Tests
 
-当你在编写测试时，按照以下清单配置 Mock 对象，可以避免常见的测试失败。
+Following this checklist when configuring Mock objects avoids common test failures.
 
-### 清单 1: MagicMock 属性初始化
+### Checklist 1: MagicMock Attribute Initialization
 
-在使用 `MagicMock()` 时，务必显式初始化以下类型的属性：
+When using `MagicMock()`, always explicitly initialize these attribute types:
 
 ```python
-# 列表/集合属性 - 初始化为空列表
+# List/set attributes — initialize to empty list
 mock.message.photo = []
 mock.message.entities = []
 mock.message.attachments = []
 
-# 可选对象属性 - 初始化为 None
+# Optional object attributes — initialize to None
 mock.message.document = None
 mock.message.video = None
 mock.message.voice = None
 mock.message.audio = None
 mock.message.caption_entities = None
 
-# 字符串属性 - 初始化为空字符串或适当值
+# String attributes — initialize to empty string or appropriate value
 mock.message.text = ""
 mock.message.caption = ""
 mock.user.name = "test_user"
 
-# 布尔属性 - 明确设置为 True/False
+# Boolean attributes — explicitly set to True/False
 mock.message.is_bot = False
 mock.channel.enabled = False
 ```
 
-**为什么重要：**
-MagicMock 的默认行为是为未设置的属性返回新的 MagicMock 对象。这会导致条件判断 `if mock.message.photo:` 意外为 True。
+**Why this matters:**
+MagicMock's default behavior is to return a new MagicMock for any unset attribute.
+This causes `if mock.message.photo:` to unexpectedly evaluate as `True`.
 
 ---
 
-### 清单 2: 异步方法 Mock
+### Checklist 2: Async Method Mocking
 
-对于异步方法，使用 `AsyncMock`：
+For async methods, use `AsyncMock`:
 
 ```python
 from unittest.mock import MagicMock, AsyncMock
 
-# 创建 mock
+# Create mock
 mock_bot = MagicMock()
 
-# 异步方法使用 AsyncMock
+# Async methods use AsyncMock
 mock_bot.get_file = AsyncMock(return_value=mock_file)
 mock_bot.send_message = AsyncMock(return_value=True)
 mock_bot.download_file = AsyncMock(return_value=b"file_content")
 
-# 同步方法保持使用 MagicMock
+# Sync methods keep using MagicMock
 mock_bot.get_username = MagicMock(return_value="bot_name")
 ```
 
-**常见错误：**
+**Common mistake:**
 ```python
-# 错误 - 普通 MagicMock 不能 await
+# Wrong — regular MagicMock cannot be awaited
 mock_bot.get_file = MagicMock(return_value=mock_file)
 file = await mock_bot.get_file()  # TypeError!
 
-# 正确
+# Correct
 mock_bot.get_file = AsyncMock(return_value=mock_file)
-file = await mock_bot.get_file()  # 正常工作
+file = await mock_bot.get_file()  # works correctly
 ```
 
 ---
 
-### 清单 3: 嵌套 Mock 对象
+### Checklist 3: Nested Mock Objects
 
-对于深层嵌套的属性访问，创建专门的 Mock 工厂：
+For deeply nested attribute access, create dedicated mock factories:
 
 ```python
 def create_mock_message(
@@ -78,7 +79,7 @@ def create_mock_message(
     has_photo: bool = False,
     has_document: bool = False,
 ) -> MagicMock:
-    """创建配置完整的 Message Mock."""
+    """Create a fully configured Message Mock."""
     mock = MagicMock()
     mock.text = text
     mock.caption = None
@@ -94,82 +95,82 @@ def create_mock_message(
 
 ---
 
-### 清单 4: 测试前验证代码路径
+### Checklist 4: Verify Code Paths Before Writing Tests
 
-在编写测试前，确认代码中的条件分支：
+Before writing a test, confirm the conditional branches in the code:
 
 ```python
-# 被测代码
+# Code under test
 def process_message(message):
-    if message.photo:  # 检查点 1
+    if message.photo:          # checkpoint 1
         handle_photo(message.photo)
-    elif message.document:  # 检查点 2
+    elif message.document:     # checkpoint 2
         handle_document(message.document)
-    elif message.text:  # 检查点 3
+    elif message.text:         # checkpoint 3
         handle_text(message.text)
 ```
 
-对应的测试配置：
+Corresponding test configuration:
 ```python
 def test_text_only_message():
     mock_msg = MagicMock()
-    mock_msg.photo = []  # 禁用检查点 1
-    mock_msg.document = None  # 禁用检查点 2
-    mock_msg.text = "Hello"  # 启用检查点 3
-    # ... 测试代码
+    mock_msg.photo = []         # disable checkpoint 1
+    mock_msg.document = None    # disable checkpoint 2
+    mock_msg.text = "Hello"     # enable checkpoint 3
+    # ... test code
 ```
 
 ---
 
-### 清单 5: Config/Options Mock
+### Checklist 5: Config/Options Mock
 
-测试配置类时，注意 None 和缺省值的处理：
+When testing config classes, pay attention to `None` vs default values:
 
 ```python
-# 选项 1: 使用实际默认值
+# Option 1: use actual default values
 class MockConfig:
-    enabled = False  # 不是 None
-    timeout = 30  # 不是 None
-    prefix = ""  # 空字符串而不是 None
+    enabled = False  # not None
+    timeout = 30     # not None
+    prefix = ""      # empty string, not None
 
-# 选项 2: 使用 spec 确保属性匹配
+# Option 2: use spec to enforce attribute matching
 from unittest.mock import MagicMock
 config = MagicMock(spec=ActualConfig)
 config.enabled = False
 config.timeout = 30
 ```
 
-**注意代码实现：**
-- `getattr(config, "enabled", False)` - 当属性不存在时返回默认值
-- `getattr(config, "enabled", False) or False` - 当属性为 None/空时强制为 False
+**Watch the implementation:**
+- `getattr(config, "enabled", False)` — returns default when attribute is missing
+- `getattr(config, "enabled", False) or False` — forces `False` when attribute is `None`/empty
 
-测试应匹配代码的实际行为。
+Tests should match the actual behavior of the code.
 
 ---
 
-## 快速模板
+## Quick Templates
 
-### 消息类 Mock 模板
+### Message Mock Template
 
 ```python
 @pytest.fixture
 def mock_message():
-    """配置完整的 Message Mock."""
+    """Fully configured Message Mock."""
     m = MagicMock()
-    # 内容
+    # Content
     m.text = ""
     m.caption = None
-    # 媒体 - 默认空
+    # Media — empty by default
     m.photo = []
     m.document = None
     m.video = None
     m.voice = None
     m.audio = None
-    # 元数据
+    # Metadata
     m.entities = []
     m.caption_entities = None
     m.message_id = "123"
-    # 用户信息
+    # User info
     m.from_user = MagicMock()
     m.from_user.id = "user_123"
     m.from_user.username = "test_user"
@@ -177,16 +178,16 @@ def mock_message():
     return m
 ```
 
-### 机器人/客户端 Mock 模板
+### Bot/Client Mock Template
 
 ```python
 @pytest.fixture
 def mock_bot():
-    """配置完整的 Bot Mock."""
+    """Fully configured Bot Mock."""
     bot = MagicMock()
     bot.username = "test_bot"
     bot.id = "bot_123"
-    # 异步方法
+    # Async methods
     bot.get_file = AsyncMock()
     bot.send_message = AsyncMock()
     bot.download_file = AsyncMock(return_value=b"content")
@@ -195,15 +196,15 @@ def mock_bot():
 
 ---
 
-## 调试技巧
+## Debugging Tips
 
-如果测试失败时怀疑是 Mock 问题：
+If a test is failing and you suspect a Mock issue:
 
 ```python
-# 添加调试输出查看实际值
+# Add debug output to inspect actual values
 print(f"mock.photo = {mock.message.photo}")
 print(f"bool(mock.photo) = {bool(mock.message.photo)}")
 print(f"type = {type(mock.message.photo)}")
 
-# 这将帮助你发现 MagicMock 默认返回值问题
+# This helps surface unexpected MagicMock default return values
 ```
