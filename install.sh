@@ -13,6 +13,51 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+# Register skill in .skills-manifest.json
+register_manifest() {
+    local name="$1"
+    local version="$2"
+    local skill_path="$3"
+    local manifest="$HOME/.claude/skills/.skills-manifest.json"
+
+    if [ ! -f "$manifest" ]; then
+        echo '{}' > "$manifest"
+    fi
+
+    # Use python to safely update JSON
+    if command -v python3 &> /dev/null; then
+        python3 -c "
+import json, os
+manifest = '$manifest'
+name = '$name'
+version = '$version'
+path = '$skill_path'
+try:
+    with open(manifest, 'r') as f:
+        data = json.load(f)
+except (json.JSONDecodeError, FileNotFoundError):
+    data = {}
+if 'skills' not in data:
+    data['skills'] = {}
+from datetime import datetime, timezone
+data['skills'][name] = {
+    'version': version,
+    'installedAt': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.000Z'),
+    'path': path,
+    'target': 'claude-code'
+}
+with open(manifest, 'w') as f:
+    json.dump(data, f, indent=2)
+    f.write('\n')
+print(f'✓ Registered {name} v{version} in manifest')
+"
+    else
+        echo -e "${YELLOW}python3 not found, skipping manifest registration${NC}"
+        echo -e "${YELLOW}Manually add to $manifest:${NC}"
+        echo "  \"$name\": {\"version\": \"$version\", \"path\": \"$skill_path\", \"target\": \"claude-code\"}"
+    fi
+}
+
 echo "🚀 Installing Python Test Pattern Skill..."
 
 # 检测 AI 工具
@@ -55,6 +100,9 @@ install_claude() {
         echo -e "${RED}Git not found${NC}"
         exit 1
     fi
+
+    # Register in skills manifest
+    register_manifest "$SKILL_NAME" "0.3.0" "$skill_dir"
 
     echo -e "${GREEN}✓ Installed to Claude Code${NC}"
 }
